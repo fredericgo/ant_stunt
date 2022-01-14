@@ -1,0 +1,1 @@
+python experiments/visualize_policy.py --policy_weights mepol/pretrained/ant 
