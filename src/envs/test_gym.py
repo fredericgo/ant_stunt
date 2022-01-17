@@ -1,7 +1,7 @@
 from mujoco.ant_takeoff import AntTakeoff
 import numpy as np
 
-env = AntTakeoff(v0=np.array([0, 0, 100]))
+env = AntTakeoff(v0=np.array([3, 3, 10]))
 
 # env is created, now we can use it: 
 for episode in range(1): 
