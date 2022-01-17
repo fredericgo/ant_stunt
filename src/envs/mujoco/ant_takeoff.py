@@ -16,7 +16,7 @@ class AntTakeoff(gym.Wrapper):
         facing direction: the x axis of the root joint
         forward reference axis: global x-axis
         forward direction: facing direction projected to xy plane
-        v0: target velocity
+        v0: target velocity [-6, 6]
         omega0: target angular velocity
         """
         ant_env = gym.make('Ant-v3',
@@ -50,7 +50,7 @@ class AntTakeoff(gym.Wrapper):
         dv = np.linalg.norm(v - self.v0, ord=1)
         
         reward = np.exp(-(0.5 * da) -(0.5 * dv))
-        return reward
+        return reward 
 
     def step(self, action):
         observation, reward, done, info = super().step(action)
