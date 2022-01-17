@@ -27,7 +27,7 @@ class AntTakeoff(gym.Wrapper):
         self._max_episode_steps = max_episode_steps
         self._elapsed_steps = None
         self.forward_ref_dir = np.array([1, 0, 0], dtype=np.float64)
-        self.v0 = np.array([0, 0, 100], dtype=np.float64)
+        self.v0 = np.array([10, 10, 100], dtype=np.float64)
 
     def calc_front_direction(self, state):
         q = state[3:7]
@@ -39,7 +39,10 @@ class AntTakeoff(gym.Wrapper):
 
     def reward_func(self, state):
         if self._elapsed_steps < self._max_episode_steps:
-            return 0.0
+            v = self.get_linear_vel(state)
+            dv = np.linalg.norm(v[:2] - self.v0[:2], ord=1)
+            return np.exp(-dv)
+            
         alpha = self.calc_front_direction(state)
         da = alpha**2
         
