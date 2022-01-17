@@ -12,7 +12,7 @@ from sac.sac import SAC
 parser = argparse.ArgumentParser(description='PyTorch Soft Actor-Critic Args')
 parser.add_argument('--env-name', default="ant_takeoff",
                     help='Mujoco Gym environment (default: HalfCheetah-v2)')
-parser.add_argument('--v0', default=np.array([0., 0., 100.], dtype=np.float64),
+parser.add_argument('--v0', default=np.array([3., 3., 10.], dtype=np.float64),
                     help='take off velocity')
 parser.add_argument('--policy', default="Gaussian",
                     help='Policy Type: Gaussian | Deterministic (default: Gaussian)')
