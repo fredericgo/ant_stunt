@@ -31,7 +31,7 @@ def create_env(env_name, **kwargs):
     elif env_name == 'ant_upsidedown':
         return ErgodicEnv(AntUpsidedown())
     elif env_name == 'ant_takeoff':
-        return AntTakeoff()
+        return AntTakeoff(**kwargs)
 
 from envs.goal.ant_goal import AntGoalEnv
 from envs.goal.ant_goal_xy import AntGoalXYEnv

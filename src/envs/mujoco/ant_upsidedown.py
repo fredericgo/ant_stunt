@@ -1,7 +1,7 @@
 import numpy as np
 import gym
 
-from common.np_util import (quaternion_invert, quaternion_multiply, 
+from common.quaternion_util import (quaternion_invert, quaternion_multiply, 
                             quaternion_to_angle,
                             quaternion_to_matrix,
                             quaternion_apply)

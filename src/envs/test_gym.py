@@ -1,12 +1,13 @@
-from mujoco.ant_nrg import AntEnergyEnv
+from mujoco.ant_takeoff import AntTakeoff
+import numpy as np
 
-env = AntEnergyEnv()
+env = AntTakeoff(v0=np.array([0, 0, 100]))
 
 # env is created, now we can use it: 
-for episode in range(10): 
+for episode in range(1): 
     obs = env.reset()
-    for step in range(50):
+    for step in range(100):
         action = env.action_space.sample()  # or given a custom model, action = policy(observation)
         nobs, reward, done, info = env.step(action)
         print(reward)
-        #env.render()
+        env.render()
