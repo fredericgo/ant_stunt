@@ -10,8 +10,10 @@ from torch.utils.tensorboard import SummaryWriter
 from sac.sac import SAC
 
 parser = argparse.ArgumentParser(description='PyTorch Soft Actor-Critic Args')
-parser.add_argument('--env-name', default="ant_upsidedown",
+parser.add_argument('--env-name', default="ant_takeoff",
                     help='Mujoco Gym environment (default: HalfCheetah-v2)')
+parser.add_argument('--v0', default=np.array([0., 0., 100.], dtype=np.float64),
+                    help='take off velocity')
 parser.add_argument('--policy', default="Gaussian",
                     help='Policy Type: Gaussian | Deterministic (default: Gaussian)')
 parser.add_argument('--eval', type=bool, default=True,
@@ -60,14 +62,14 @@ parser.add_argument('--num_workers', type=int, default=1,
                     help='# of epochs')  
 parser.add_argument('--state_filter', type=list, default=[2, 3, 4, 5, 6],
                     help='state filter')
-parser.add_argument('--pretrained_policy', default="data/policy/mepol_pretrained_policy.torch",
-                    help='Policy Type: Gaussian | Deterministic (default: Gaussian)')
+#parser.add_argument('--pretrained_policy', default="data/policy/mepol_pretrained_policy.torch",
+#                    help='Policy Type: Gaussian | Deterministic (default: Gaussian)')
 args = parser.parse_args()
 
 
 def main():
     # Environment
-    env = envs.create_env(args.env_name, q=np.array([0.924, 0.0, 0.383, 0.0]))
+    env = envs.create_env(args.env_name, v0=args.v0)
 
     env.seed(args.seed)
     env.action_space.seed(args.seed)
@@ -77,7 +79,6 @@ def main():
 
     # Agent
     agent = SAC(env, args)
-    agent.load_policy(args.pretrained_policy)
     agent.train()
 
     env.close()

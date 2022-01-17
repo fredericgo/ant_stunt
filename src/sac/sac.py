@@ -207,8 +207,6 @@ class SAC(object):
         # sample initial and goal from buffer
         def rollout():
             rewards = []
-            distances = []
-
             state = self.env.reset()
           
             for t in range(self.traj_len):
@@ -216,16 +214,13 @@ class SAC(object):
                 
                 next_state, reward, done, info = self.env.step(action)
                 state = next_state
-                distances.append(info["dq"])
                 rewards.append(reward)
-            return np.mean(rewards), distances
+            return np.mean(rewards)
         rewards = []
-        distances = []
         for _ in range(num):
-            r, d = rollout()
+            r  = rollout()
             rewards.append(r)
-            distances.append(d[-1])
-        return np.mean(rewards), np.mean(distances)
+        return np.mean(rewards)
 
 
     def train(self):
@@ -255,9 +250,8 @@ class SAC(object):
                     updates += 1
 
             if epoch % self.log_interval == 0:
-                reward, final_distance  = self.evaluate()
+                reward  = self.evaluate()
                 self.writer.add_scalar('Train/avg_reward', reward, epoch)
-                self.writer.add_scalar('Train/final_distance', final_distance, epoch)    
                         
             if epoch % self.checkpoint_interval == 0:
                 self.save_model(self.log_dir)

@@ -47,7 +47,7 @@ class AntTakeoff(gym.Wrapper):
         dv = np.linalg.norm(v - self.v0, ord=1)
         
         reward = np.exp(-(0.5 * da) -(0.5 * dv))
-        return reward 
+        return reward
 
     def step(self, action):
         observation, reward, done, info = super().step(action)

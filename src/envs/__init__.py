@@ -33,15 +33,3 @@ def create_env(env_name, **kwargs):
     elif env_name == 'ant_takeoff':
         return AntTakeoff(**kwargs)
 
-from envs.goal.ant_goal import AntGoalEnv
-from envs.goal.ant_goal_xy import AntGoalXYEnv
-
-goal_env_names = ['ant_goal', 'ant_goal_xy']
-
-def create_goal_env(env_name, **kwargs):
-    assert env_name in goal_env_names
-
-    if env_name == 'ant_goal':
-        return ErgodicEnv(AntGoalEnv(**kwargs))
-    elif env_name == 'ant_goal_xy':
-        return ErgodicEnv(AntGoalXYEnv(**kwargs))
