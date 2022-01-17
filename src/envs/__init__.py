@@ -18,10 +18,9 @@ from envs.wrappers import ErgodicEnv
 
 from envs.mujoco.ant import Ant
 from envs.mujoco.ant_upsidedown import AntUpsidedown
-from envs.mujoco.ant_random import AntRandom
-from envs.mujoco.ant_zq import AntZQ
+from envs.mujoco.ant_takeoff import AntTakeoff
 
-env_names = ['ant', 'ant_upsidedown', 'ant_random', 'ant_zq']
+env_names = ['ant', 'ant_upsidedown', 'ant_takeoff']
 
 def create_env(env_name, **kwargs):
     """Helper function."""
@@ -31,11 +30,8 @@ def create_env(env_name, **kwargs):
         return ErgodicEnv(Ant())
     elif env_name == 'ant_upsidedown':
         return ErgodicEnv(AntUpsidedown())
-    elif env_name == 'ant_random':
-        return ErgodicEnv(AntRandom())
-    elif env_name == 'ant_zq':
-        return ErgodicEnv(AntZQ(**kwargs))
-    
+    elif env_name == 'ant_takeoff':
+        return AntTakeoff()
 
 from envs.goal.ant_goal import AntGoalEnv
 from envs.goal.ant_goal_xy import AntGoalXYEnv
