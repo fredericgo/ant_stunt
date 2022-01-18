@@ -8,7 +8,11 @@ from common.vector_util import angle_between_2d
 
 class AntTakeoff(gym.Wrapper):
 
-    def __init__(self, v0, max_episode_steps=100):
+    def __init__(self, 
+                 v0, 
+                 max_episode_steps=100,
+                 ctrl_cost_weight=0.5,
+                 bonus_weight=10):
         """
         The goal of the env is to train a ant that takes off at the end of an episode.
         Z axis is up down.
@@ -20,7 +24,9 @@ class AntTakeoff(gym.Wrapper):
         omega0: target angular velocity
         """
         ant_env = gym.make('Ant-v3',
-                           exclude_current_positions_from_observation=True)
+                           exclude_current_positions_from_observation=True,
+                           terminate_when_unhealthy=False)
+
         super().__init__(ant_env)
 
         self.num_features = self.state_vector().shape[0]
@@ -28,6 +34,8 @@ class AntTakeoff(gym.Wrapper):
         self._elapsed_steps = None
         self.forward_ref_dir = np.array([1, 0, 0], dtype=np.float64)
         self.v0 = v0
+        self._ctrl_cost_weight = ctrl_cost_weight
+        self._bonus_weight = bonus_weight
 
     def calc_front_direction(self, state):
         q = state[3:7]
@@ -37,12 +45,16 @@ class AntTakeoff(gym.Wrapper):
     def get_linear_vel(self, state):
         return state[15:18]
 
+    def control_cost(self, action):
+        control_cost = self._ctrl_cost_weight * np.sum(np.square(action))
+        return control_cost
+
     def reward_func(self, state, info={}):
-        if self._elapsed_steps < self._max_episode_steps:
-            v = self.get_linear_vel(state)
-            dv = np.linalg.norm(v[:2] - self.v0[:2], ord=1)
-            info["dv"] = dv
-            return np.exp(-dv)
+        #if self._elapsed_steps < self._max_episode_steps:
+        #    v = self.get_linear_vel(state)
+        #    dv = np.linalg.norm(v[:2] - self.v0[:2], ord=1)
+        #    info["dv"] = dv
+        #    return np.exp(-dv)
 
         alpha = self.calc_front_direction(state)
         da = alpha**2
@@ -50,7 +62,7 @@ class AntTakeoff(gym.Wrapper):
         v = self.get_linear_vel(state)
         dv = np.linalg.norm(v - self.v0, ord=1)
         
-        reward = np.exp(-dv)
+        reward = self._bonus_weight * np.exp(-dv)
         info["dv"] = dv
         return reward
 
@@ -63,7 +75,10 @@ class AntTakeoff(gym.Wrapper):
         
         # calculate reward
         state = self.state_vector()
-        reward = self.reward_func(state, info)
+        bonus = self.reward_func(state, info)
+        cost = self.control_cost(action)
+
+        reward = bonus -  cost
         
         return self.state_vector(), reward, done, info
 

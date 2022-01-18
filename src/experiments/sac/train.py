@@ -52,9 +52,9 @@ parser.add_argument('--log_interval', type=int, default=100,
 parser.add_argument('--eval_interval', type=int, default=100, 
                     help='checkpoint training model every # steps')
 
-parser.add_argument('--traj_len', type=int, default=100, 
+parser.add_argument('--traj_len', type=int, default=50, 
                     help='checkpoint training model every # steps')
-parser.add_argument('--num_epochs', type=int, default=20000, 
+parser.add_argument('--num_epochs', type=int, default=50000, 
                     help='# of epochs')  
 parser.add_argument('--k', type=int, default=4, 
                     help='# of epochs')  
@@ -69,7 +69,7 @@ args = parser.parse_args()
 
 def main():
     # Environment
-    env = envs.create_env(args.env_name, v0=args.v0)
+    env = envs.create_env(args.env_name, v0=args.v0, max_episode_steps=args.traj_len)
 
     env.seed(args.seed)
     env.action_space.seed(args.seed)
