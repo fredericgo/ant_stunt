@@ -45,14 +45,14 @@ parser.add_argument('--replay_size', type=int, default=1000000, metavar='N',
                     help='size of replay buffer (default: 10000000)')
 parser.add_argument('--cuda', action="store_true",
                     help='run on CUDA (default: False)')
-parser.add_argument('--checkpoint_interval', type=int, default=50, 
+parser.add_argument('--checkpoint_interval', type=int, default=500, 
                     help='checkpoint training model every # steps')
-parser.add_argument('--log_interval', type=int, default=10, 
+parser.add_argument('--log_interval', type=int, default=100, 
                     help='checkpoint training model every # steps')
 parser.add_argument('--eval_interval', type=int, default=100, 
                     help='checkpoint training model every # steps')
 
-parser.add_argument('--traj_len', type=int, default=200, 
+parser.add_argument('--traj_len', type=int, default=100, 
                     help='checkpoint training model every # steps')
 parser.add_argument('--num_epochs', type=int, default=20000, 
                     help='# of epochs')  

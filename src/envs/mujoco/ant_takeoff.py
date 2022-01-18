@@ -37,10 +37,11 @@ class AntTakeoff(gym.Wrapper):
     def get_linear_vel(self, state):
         return state[15:18]
 
-    def reward_func(self, state):
+    def reward_func(self, state, info={}):
         if self._elapsed_steps < self._max_episode_steps:
             v = self.get_linear_vel(state)
             dv = np.linalg.norm(v[:2] - self.v0[:2], ord=1)
+            info["dv"] = dv
             return np.exp(-dv)
 
         alpha = self.calc_front_direction(state)
@@ -49,8 +50,9 @@ class AntTakeoff(gym.Wrapper):
         v = self.get_linear_vel(state)
         dv = np.linalg.norm(v - self.v0, ord=1)
         
-        reward = np.exp(-(0.5 * da) -(0.5 * dv))
-        return reward 
+        reward = np.exp(-dv)
+        info["dv"] = dv
+        return reward
 
     def step(self, action):
         observation, reward, done, info = super().step(action)
@@ -61,7 +63,7 @@ class AntTakeoff(gym.Wrapper):
         
         # calculate reward
         state = self.state_vector()
-        reward = self.reward_func(state)
+        reward = self.reward_func(state, info)
         
         return self.state_vector(), reward, done, info
 

@@ -12,8 +12,10 @@ import imageio
 from sac.model import GaussianPolicy
 
 parser = argparse.ArgumentParser(description='PyTorch Soft Actor-Critic Args')
-parser.add_argument('--env-name', default="ant_upsidedown",
+parser.add_argument('--env-name', default="ant_takeoff",
                     help='Mujoco Gym environment (default: HalfCheetah-v2)')
+parser.add_argument('--v0', default=np.array([3., 3., 3.], dtype=np.float64),
+                    help='take off velocity')
 parser.add_argument('--seed', type=int, default=10, metavar='N',
                     help='random seed (default: 123456)')
 parser.add_argument('--hidden_size', type=int, nargs="+", default=[400, 300], metavar='N',
@@ -21,9 +23,9 @@ parser.add_argument('--hidden_size', type=int, nargs="+", default=[400, 300], me
 parser.add_argument('--cuda', action="store_true",
                     help='run on CUDA (default: False)')
 
-parser.add_argument('--traj_len', type=int, default=300, 
+parser.add_argument('--traj_len', type=int, default=100, 
                     help='checkpoint training model every # steps')
-parser.add_argument('--num_epochs', type=int, default=200, 
+parser.add_argument('--num_epochs', type=int, default=5, 
                     help='num epochs')
 parser.add_argument('--model_dir', type=str, default=None, 
                     help="model path")
@@ -54,7 +56,7 @@ def render_trajectory(policy, env, writer):
 
 def main():
     # Environment
-    env = envs.create_env(args.env_name, q=np.array([0.600, 0.566, 0.566,  0.024]))
+    env = envs.create_env(args.env_name, v0=args.v0)
 
 
     env.seed(args.seed)
@@ -72,7 +74,8 @@ def main():
     else:
         writer = None
 
-    render_trajectory(policy, env, writer)
+    for _ in range(args.num_epochs):
+        render_trajectory(policy, env, writer)
 
     env.close()
 
