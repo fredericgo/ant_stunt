@@ -10,9 +10,13 @@ from torch.utils.tensorboard import SummaryWriter
 from sac.sac import SAC
 
 parser = argparse.ArgumentParser(description='PyTorch Soft Actor-Critic Args')
-parser.add_argument('--env-name', default="ant_takeoff",
+parser.add_argument('--env-name', default="ant_jump",
                     help='Mujoco Gym environment (default: HalfCheetah-v2)')
-parser.add_argument('--v0', default=np.array([3., 3., 10.], dtype=np.float64),
+parser.add_argument('--initial_state_file', type=str, default=None, required=True,
+                    help='initial state')
+parser.add_argument('--z',  default=1.2,
+                    help='height')
+parser.add_argument('--max_speed', type=float, default=3.,
                     help='take off velocity')
 parser.add_argument('--policy', default="Gaussian",
                     help='Policy Type: Gaussian | Deterministic (default: Gaussian)')
@@ -51,10 +55,9 @@ parser.add_argument('--log_interval', type=int, default=100,
                     help='checkpoint training model every # steps')
 parser.add_argument('--eval_interval', type=int, default=100, 
                     help='checkpoint training model every # steps')
-
 parser.add_argument('--traj_len', type=int, default=50, 
                     help='checkpoint training model every # steps')
-parser.add_argument('--num_epochs', type=int, default=50000, 
+parser.add_argument('--num_epochs', type=int, default=100000, 
                     help='# of epochs')  
 parser.add_argument('--k', type=int, default=4, 
                     help='# of epochs')  
@@ -62,14 +65,17 @@ parser.add_argument('--num_workers', type=int, default=1,
                     help='# of epochs')  
 parser.add_argument('--state_filter', type=list, default=[2, 3, 4, 5, 6],
                     help='state filter')
-#parser.add_argument('--pretrained_policy', default="data/policy/mepol_pretrained_policy.torch",
-#                    help='Policy Type: Gaussian | Deterministic (default: Gaussian)')
 args = parser.parse_args()
-
 
 def main():
     # Environment
-    env = envs.create_env(args.env_name, v0=args.v0, max_episode_steps=args.traj_len)
+    env = envs.create_env(
+            args.env_name, 
+            initial_state_file=args.initial_state_file,
+            z=args.z,
+            init_threshold=0.2,
+            threshold=0.1,
+            max_episode_steps=args.traj_len)
 
     env.seed(args.seed)
     env.action_space.seed(args.seed)

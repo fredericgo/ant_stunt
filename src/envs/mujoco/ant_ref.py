@@ -7,16 +7,18 @@ from common.quaternion_util import (quaternion_invert, quaternion_multiply,
                             quaternion_apply)
 from common.vector_util import angle_between_2d
 from common.bell import bell
+from common.geometry import SkeletonGeometry
 
-class AntTakeoff(gym.Wrapper):
+JOINT_WEIGHTS = np.array([1., .5, .3, .5, .3, .5, .3, .5, .3], dtype=np.float32)
+
+
+class AntJumpFixedPose(gym.Wrapper):
 
     def __init__(self, 
-                 vy, 
+                 velocity, 
                  angular_velocity,
                  max_episode_steps=100,
-                 ctrl_cost_weight=0.5,
-                 bonus_weight=100,
-                 max_speed=3.0):
+                 bonus_weight=100):
         """
         The goal of the env is to train a ant that takes off at the end of an episode.
         Z axis is up down.
@@ -36,46 +38,39 @@ class AntTakeoff(gym.Wrapper):
         self.num_features = 1 + self.env.unwrapped._get_obs().shape[0] 
         self._max_episode_steps = max_episode_steps
         self._elapsed_steps = None
-        self.forward_ref_dir = np.array([1, 0, 0], dtype=np.float64)
-        self.vy = vy
+        self.velocity = velocity
         self.angular_velocity = angular_velocity
-        self.max_speed = max_speed
-
-        self._ctrl_cost_weight = ctrl_cost_weight
         self._bonus_weight = bonus_weight
+        self.skeleton = SkeletonGeometry(self)
+        
+        self.ref_pose = np.array([1., 0., 0., 0., 0.,  1,   0.,   -1.,   0.,   -1.,   0.,  1.])
+
         self.t = 0
 
-    def calc_front_direction(self, state):
-        q = state[1:5]
-        x_p = quaternion_apply(q, self.forward_ref_dir)
-        return angle_between_2d(x_p[:2], self.forward_ref_dir[:2])
-
-    def get_forward_vel(self, state):
-        v = state[15:18]
-        vf = np.dot(v, self.forward_ref_dir)
-        vf /= (np.linalg.norm(self.forward_ref_dir) + 1e-6) 
-        return vf
-
     def bonus_func(self, state, info={}):
-        alpha = self.calc_front_direction(state)
-        da = alpha**2
-        
         v = state[15:18]
-        bonus = self._bonus_weight * bell(v[1], self.vy, 1.0)
+        bonus = self._bonus_weight * np.exp(-1.0* np.mean(np.abs(v - self.velocity)))
         omega = state[18:21]
         bonus *= np.exp(-1.0* np.mean(np.abs(omega - self.angular_velocity)))
 
         info["dv"] = bonus
         return bonus
 
-    def reward_func(self, state, action, info={}):
-        vf = self.get_forward_vel(state)
-        vf = np.clip(vf, -self.max_speed, self.max_speed)
-        info["dv"] = vf
-        reward = (vf + self.max_speed) / self.max_speed - 1.0
-        ctrl_cost = 0.5 * np.square(action).sum()
-       
-        reward = reward - ctrl_cost 
+    def reward_func(self, state, action, info={}):      
+        q = state[2:6]
+        q0 = self.ref_pose[:4]
+        q_diff = quaternion_multiply(q, quaternion_invert(q0))
+        q_diff = quaternion_to_angle(q_diff) 
+
+        theta = state[6:14]
+        theta0 = self.ref_pose[4:]
+        joint_diff = (theta - theta0)**2   
+        joint_diff *= JOINT_WEIGHTS[1:]
+        joint_diff = np.sum(joint_diff, axis=-1)
+
+        reward = np.exp(-1 * q_diff)
+        reward *= np.exp(-1 * joint_diff)
+        info["dv"] = q_diff
 
         if self._elapsed_steps >= self._max_episode_steps:
             reward = self.bonus_func(state, info)

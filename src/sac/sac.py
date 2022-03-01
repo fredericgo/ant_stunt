@@ -32,12 +32,7 @@ class SAC(object):
         self.batch_size = args.batch_size
         self.k = args.k
         self.num_workers = args.num_workers
-        self.state_filter = args.state_filter
         self.checkpoint_interval = args.checkpoint_interval
-
-        self.ns = len(self.state_filter) if (self.state_filter is not None) else env.num_features
-        self.B = np.log(self.k) - scipy.special.digamma(self.k)
-        self.G = scipy.special.gamma(self.ns/2 + 1)
 
         self.policy_type = args.policy
         self.target_update_interval = args.target_update_interval
@@ -216,14 +211,16 @@ class SAC(object):
                 next_state, reward, done, info = self.env.step(action)
                 state = next_state
                 rewards.append(reward)
-                distances.append(info["dv"])
-            return np.mean(rewards), np.mean(distances)
+                if "dv" in info:
+                    distances.append(info["dv"])
+            return np.sum(rewards), np.mean(distances)
         rewards = []
+        distances = []
         for _ in range(num):
             r, d  = rollout()
             rewards.append(r)
-            rewards.append(d)
-        return np.mean(rewards), np.mean(d)
+            distances.append(d)
+        return np.mean(rewards), np.mean(distances)
 
 
     def train(self):
@@ -254,9 +251,9 @@ class SAC(object):
 
             if epoch % self.log_interval == 0:
                 reward, delta = self.evaluate()
-                self.writer.add_scalar('Train/avg_reward', reward, epoch)
+                self.writer.add_scalar('Train/reward', reward, epoch)
                 self.writer.add_scalar('Train/avg_del', delta, epoch)
-  
+
             if epoch % self.checkpoint_interval == 0:
                 self.save_model(self.log_dir)
                 print("----------------------------------------")

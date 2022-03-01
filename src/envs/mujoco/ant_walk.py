@@ -7,14 +7,15 @@ from common.quaternion_util import (quaternion_invert, quaternion_multiply,
                             quaternion_apply)
 from common.vector_util import angle_between_2d
 from common.bell import bell
+from common.geometry import SkeletonGeometry
 
-class AntTakeoff(gym.Wrapper):
+JOINT_WEIGHTS = np.array([1., .5, .3, .5, .3, .5, .3, .5, .3], dtype=np.float32)
+
+
+class AntWalk(gym.Wrapper):
 
     def __init__(self, 
-                 vy, 
-                 angular_velocity,
                  max_episode_steps=100,
-                 ctrl_cost_weight=0.5,
                  bonus_weight=100,
                  max_speed=3.0):
         """
@@ -37,18 +38,10 @@ class AntTakeoff(gym.Wrapper):
         self._max_episode_steps = max_episode_steps
         self._elapsed_steps = None
         self.forward_ref_dir = np.array([1, 0, 0], dtype=np.float64)
-        self.vy = vy
-        self.angular_velocity = angular_velocity
-        self.max_speed = max_speed
 
-        self._ctrl_cost_weight = ctrl_cost_weight
         self._bonus_weight = bonus_weight
+        self.max_speed = max_speed
         self.t = 0
-
-    def calc_front_direction(self, state):
-        q = state[1:5]
-        x_p = quaternion_apply(q, self.forward_ref_dir)
-        return angle_between_2d(x_p[:2], self.forward_ref_dir[:2])
 
     def get_forward_vel(self, state):
         v = state[15:18]
@@ -56,19 +49,7 @@ class AntTakeoff(gym.Wrapper):
         vf /= (np.linalg.norm(self.forward_ref_dir) + 1e-6) 
         return vf
 
-    def bonus_func(self, state, info={}):
-        alpha = self.calc_front_direction(state)
-        da = alpha**2
-        
-        v = state[15:18]
-        bonus = self._bonus_weight * bell(v[1], self.vy, 1.0)
-        omega = state[18:21]
-        bonus *= np.exp(-1.0* np.mean(np.abs(omega - self.angular_velocity)))
-
-        info["dv"] = bonus
-        return bonus
-
-    def reward_func(self, state, action, info={}):
+    def reward_func(self, state, action, info={}):      
         vf = self.get_forward_vel(state)
         vf = np.clip(vf, -self.max_speed, self.max_speed)
         info["dv"] = vf
@@ -76,9 +57,8 @@ class AntTakeoff(gym.Wrapper):
         ctrl_cost = 0.5 * np.square(action).sum()
        
         reward = reward - ctrl_cost 
+        info["dv"] = vf
 
-        if self._elapsed_steps >= self._max_episode_steps:
-            reward = self.bonus_func(state, info)
         return reward
 
     def step(self, action):

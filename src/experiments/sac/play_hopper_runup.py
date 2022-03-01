@@ -13,29 +13,27 @@ from PIL import Image, ImageFont, ImageDraw
 from sac.model import GaussianPolicy
 
 parser = argparse.ArgumentParser(description='PyTorch Soft Actor-Critic Args')
-parser.add_argument('--env-name', default="ant_jump_with_reference",
+parser.add_argument('--env-name', default="hopper_runup",
                     help='Mujoco Gym environment (default: HalfCheetah-v2)')
-parser.add_argument('--motion_file', type=str, default=None,
-                    help='Motion file')
-parser.add_argument('--v',  default=np.array([3.0, 0, 0]),
+parser.add_argument('--v', default=np.array([5.0,  0.00]),
                     help='take off velocity')
-parser.add_argument('--angular_velocity', default=np.array([0., 0., 0.0]),
-                    help='take off velocity')
-parser.add_argument('--seed', type=int, default=10, metavar='N',
+parser.add_argument('--w', default=np.array([5.00]),
+                    help='take off anguluar velocity')
+parser.add_argument('--seed', type=int, default=123456, metavar='N',
                     help='random seed (default: 123456)')
 parser.add_argument('--hidden_size', type=int, nargs="+", default=[400, 300], metavar='N',
                     help='hidden size (default: 256)')
 parser.add_argument('--cuda', action="store_true",
                     help='run on CUDA (default: False)')
 
-parser.add_argument('--traj_len', type=int, default=50, 
+parser.add_argument('--traj_len', type=int, default=15, 
                     help='checkpoint training model every # steps')
-parser.add_argument('--num_epochs', type=int, default=1, 
-                    help='num epochs')
+
 parser.add_argument('--model_dir', type=str, default=None, 
                     help="model path")
 parser.add_argument('--video_file_name', type=str, default=None, 
                     help='video file name')
+
 args = parser.parse_args()
 
 
@@ -69,21 +67,19 @@ def render_trajectory(policy, env, writer):
         _, _, action = policy.sample(state)
         action = action.detach().cpu().numpy()[0]
         action = np.clip(action, env.action_space.low, env.action_space.high)
-        state, r, done, _ = env.step(action)
-        #print(state.shape)
-        print(t, r, done, state[14:17], state[17:20])
-        #print(t, r, done, state[15:18], state[18:21])
+        state, r, done, info = env.step(action)
+        print(state.shape)
+
+        print(t, r, state[6:9], info)
 
 
 def main():
     # Environment
     env = envs.create_env(
             args.env_name, 
-            motion_file=args.motion_file,
             velocity=args.v,
-            angular_velocity=args.angular_velocity,
+            angular_velocity=args.w,
             max_episode_steps=args.traj_len)
-
 
     env.seed(args.seed)
     env.action_space.seed(args.seed)
@@ -99,8 +95,7 @@ def main():
     else:
         writer = None
 
-    for _ in range(args.num_epochs):
-        render_trajectory(policy, env, writer)
+    render_trajectory(policy, env, writer)
 
     env.close()
 
